@@ -9,48 +9,33 @@
 #| | | |/ _ \| __/ __|
 #| |_| | (_) | |_\__ \
 #|____/ \___/ \__|___/
-#Imports
-from libqtile import bar, layout, widget
+#
+# Imports
+from libqtile import bar, layout, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
-from libqtile import hook
-import psutil
+from libqtile.backend.wayland import InputConfig
+from qtile_extras import widget
+from qtile_extras.popup.templates.mpris2 import COMPACT_LAYOUT, DEFAULT_LAYOUT
+
 import os
 import subprocess
+import psutil
 
-#Set your modkey
+#Set modkey (Super)
 mod = "mod4"
-#Terminal, uses "guess_terminal" by default. Doesn't really matter as opening alacritty is defined in key bindings later.
-terminal = "alacritty"
+#Terminal, uses "guess_terminal" by default
+myTerm = "alacritty"
+#Set browser variable
+myBrowser = "firefox"
 
-#Autostart .config/qtile/autostart.sh
+#Set startup applications in .config/qtile/autostart.sh
 @hook.subscribe.startup_once
 def autostart():
     home = os.path.expanduser('~/.config/qtile/autostart.sh')
     subprocess.Popen([home])
 
-
-@hook.subscribe.client_new
-def _swallow(window):
-    pid = window.get_net_wm_pid()
-    ppid = psutil.Process(pid).ppid()
-    cpids = {c.window.get_net_wm_pid(): wid for wid, c in window.qtile.windows_map.items()}
-    for i in range(5):
-        if not ppid:
-            return
-        if ppid in cpids:
-            parent = window.qtile.windows_map.get(cpids[ppid])
-            parent.minimized = True
-            window.parent = parent
-            return
-        ppid = psutil.Process(ppid).ppid()
-
-@hook.subscribe.client_killed
-def _unswallow(window):
-    if hasattr(window, 'parent'):
-        window.parent.minimized = False
-
-#Change window structure
+#Qtile related keybindings (lots more available, these are just the ones I use)
 keys = [
     # A list of available commands that can be bound to keys can be found
     # at https://docs.qtile.org/en/latest/manual/config/lazy.html
@@ -59,7 +44,6 @@ keys = [
     Key([mod], "l", lazy.layout.right(), desc="Move focus to right"),
     Key([mod], "j", lazy.layout.down(), desc="Move focus down"),
     Key([mod], "k", lazy.layout.up(), desc="Move focus up"),
-    Key([mod], "space", lazy.layout.next(), desc="Move window focus to other window"),
     # Move windows between left/right columns or move up/down in current stack.
     # Moving out of range in Columns layout will create new column.
     Key([mod, "shift"], "h", lazy.layout.shuffle_left(), desc="Move window to the left"),
@@ -72,7 +56,8 @@ keys = [
     Key([mod, "control"], "l", lazy.layout.grow_right(), desc="Grow window to the right"),
     Key([mod, "control"], "j", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow window up"),
-    Key([mod], "n", lazy.layout.normalize(), desc="Reset all window sizes"),
+
+
     # Toggle between split and unsplit sides of stack.
     # Split = all windows displayed
     # Unsplit = 1 window displayed, like Max layout, but still with
@@ -83,36 +68,39 @@ keys = [
         lazy.layout.toggle_split(),
         desc="Toggle between split and unsplit sides of stack",
     ),
-    #Open terminal, change to "guess_terminal" if you want it to use your terminal as defined earlier.
-    Key([mod], "t", lazy.spawn("alacritty"), desc="Launch terminal"),
-    # Toggle between different layouts as defined below, doesn't really matter as I only use the "Columns" layout.
-    Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
+#Various other keybindings, change to preference. These are quite arbitrary and just something I've gotten used to.
+    Key([mod], "t", lazy.spawn(myTerm), desc="Launch terminal"),
     Key([mod, "shift"], "q", lazy.window.kill(), desc="Kill focused window"),
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
-    Key([mod, "shift"], "v", lazy.spawn("brave-browser"), desc="Open Brave"),
     Key([mod], "d", lazy.spawn("rofi -show drun"), desc="Open application launcher"),
-    Key([mod, "shift"], "l", lazy.spawn("/home/arttu/AppImages/Librewolf.AppImage"), desc="Open Librewolf"),
-    Key([mod, "shift"], "d", lazy.spawn("discord"), desc="Open Discord"),
-    Key([mod, "shift"], "p", lazy.spawn("lollypop"), desc="Media player"),
-    Key([mod, "shift"], "c", lazy.spawn("chromium"), desc="Secondary browser"),
+    Key([mod], "b", lazy.spawn("strawberry"), desc="Media player"),
+    Key([mod], "c", lazy.spawn("chromium"), desc="Secondary browser"),
     Key([mod, "shift"], "y", lazy.spawn("brightnessctl s +100"), desc="Set brightness up"),
     Key([mod, "shift"], "u", lazy.spawn("brightnessctl s 100-"), desc="Set brightness down"),
     Key([], "XF86AudioMute", lazy.spawn("amixer -q set Master toggle"), desc="Mute audio"),
     Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -10%"), desc="Sound down"),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +10%"), desc="Sound down"),
-    Key([mod, "shift"], "f", lazy.spawn("firefox"), desc="Browser"),  
-    Key([mod, "shift"], "n", lazy.spawn("nemo"), desc="Open graphical file browser"),  
+    Key([mod], "w", lazy.spawn("firefox -P personal"), desc="Browser"),  
+    Key([mod], "s", lazy.spawn("firefox -P school"), desc="Browser for school work"),  
+    Key([mod], "n", lazy.spawn("nemo"), desc="Open graphical file browser"),  
     Key([mod, "shift"], "t", lazy.spawn("thunderbird"), desc="Open mail"),  
-    Key([mod, "shift"], "g", lazy.spawn("grim"), desc="Take a screenshot"),  
+    Key([mod], "g", lazy.spawn("grim"), desc="Take a screenshot"),  
     Key([mod, "shift"], "space", lazy.window.toggle_floating()),
     Key([mod], "p", lazy.spawn("pavucontrol"), desc="Control volume"),
-    Key([mod], "r", lazy.spawn("alacritty -e ranger"), desc="Open terminal file browser"),
-    Key([mod, "shift"], "r", lazy.spawn("liferea"), desc="Open RSS reader"),
-    Key([mod], "m", lazy.spawn("./Scripts/Monitorsetup"), desc="DMenu script to setup monitors"),
-    Key([mod], "n", lazy.spawn("nitrogen"), desc="Change wallpaper"),
+    Key([mod], "r", lazy.spawn("liferea"), desc="Open RSS reader"),
+    Key([mod], "m", lazy.spawn("bash .mouseaccel"), desc="Setup mice"),
+    Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="Next track"),
+    Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Previous track"),
+    Key([mod], "space", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
+    Key([mod], "e", lazy.spawn("easyeffects"), desc="Change EQ settings"),
+    Key([mod, "shift"], "s", lazy.spawn("flameshot gui"), desc="Take a screenshot"),
+    Key([mod], "o", lazy.spawn("obs"), desc="Start streaming/recording"),
+    Key([mod], "m", lazy.spawn("./Scripts/displayselect"), desc="Change monitor setup"),
+    Key([mod], "a", lazy.spawn("arandr"), desc="Change monitor setup"),
 ]
-#Groups, tags, whatever you want to call them. Change to whatever you'd like.
+
+#Add groups here, also use asdfuiop if want be. 
 groups = [Group(i) for i in "123456789"]
 
 for i in groups:
@@ -139,13 +127,17 @@ for i in groups:
         ]
     )
 
-#To set up multiple layouts, add layout.Nameoflayout( (margins, border width, etc)
+#Configure layouts, I prefer Columns or MonadTall, but feel free to use any of the ones listed below 
 layouts = [
-    layout.Columns(border_width=4, margin = 2, border_focus="#"),
+    layout.Columns(border_width=4,
+        margin = 10,
+        border_focus="#cc241d",
+        border_on_single=0,
+        margin_on_single=0,
+        ),
     layout.Max(
     border_width=2
         ),
-    # Try more layouts by unleashing below layouts.
     # layout.Stack(num_stacks=2),
     # layout.Bsp(),
     # layout.Matrix(),
@@ -158,10 +150,10 @@ layouts = [
     # layout.Zoomy(),
 ]
 
-#Set default parameters for Widgets
+#Set the default settings for different widgets
 widget_defaults = dict(
     font="Hack Nerd Font Bold",
-    fontsize=12,
+    fontsize=14,
     padding=3,
 )
 extension_defaults = widget_defaults.copy()
@@ -200,150 +192,111 @@ colors = [
 ]  # window name#
 
 
+#Configure the bar
 screens = [
     Screen(
         top=bar.Bar(
             [
                 widget.Sep(
-                    linewidth=0, padding=2, foreground=colors[2], background=colors[0]
+                    linewidth=0,
+                    padding=2,
+                    foreground=colors[2],
+                    background=colors[0]
                 ),
-                widget.Image( # Set an image of the distro logo if wanted 
+                widget.Image( #Set a picture in your top left corner
                     scale=True,
-                    filename="~/.config/qtile/images/penguin.png",
+#                    filename='~/.config/qtile/images/image_proxy.png',
                     background=colors[0],
+                    margin=3,
                 ),
                 widget.Sep(  # Separator between image and group box.
-                    linewidth=0, padding=0, foreground=colors[2], background=colors[0]
+                    linewidth=0,
+                    padding=0,
+                    foreground=colors[2],
+                    background=colors[0]
                 ),
                 widget.GroupBox(
-                    fontsize=14,
                     margin_y=3,
                     margin_x=3,
-                    padding_y=5,
+                    padding_y=3,
                     padding_x=3,
                     spacing=0,
                     center_aligned=True,
                     active=colors[8],
-                    inactive=colors[8],
+                    inactive=colors[7],
                     rounded=True,
                     highlight_color=colors[5],
-                    highlight_method="block",
-                    this_current_screen_border=colors[5],
+                    highlight_method='line',
+                    this_current_screen_border=colors[24],
                     this_screen_border=colors[5],
                     other_current_screen_border=colors[5],
                     other_screen_border=colors[5],
                     foreground=colors[8],
                     background=colors[0],
+                    disable_drag=True,
+                    toggle=False,
+                    use_mouse_wheel=False,
+                    mouse_callbacks={'Button1': lambda: None}
                 ),
-                # widget.Prompt( # Nah, rather use rofi or dmenu.
-                # prompt=prompt,
-                # font="Ubuntu",
-                # padding=10,
-                # foreground=colors[8],
-                # background=colors[0],
-                # ),
-                widget.Sep(  # Separator between Groupbox and Window name.
-                    linewidth=0, padding=0, foreground=colors[2], background=colors[0]
-                ),
-                widget.TaskList(
-                    fontsize=14,
+                widget.WindowName(
                     foreground=colors[8],
                     background=colors[0],
-                    border=colors[5],
-                    center_aligned=True,
-                    spacing=6,
-                    margin_y=5,
-                    margin_x=3,
-                    padding_y=0,
-                    padding_x=3,
-                    max_title_width=350,
-                    highlight_color=colors[5],
-                    highlight_method="block",
-                    rounded=True,
-                    icon_size=20
+                    max_chars=20,
+                    scroll=True,
                 ),
-                widget.Sep(  # Separator between Window name and widgets.
-                    linewidth=0, padding=20, foreground=colors[2], background=colors[0]
-                ),
-                widget.OpenWeather(
-                    location='Helsinki',
-                    padding=5,
-                    format='{location_city}: {main_temp} °{units_temperature} {humidity}% {weather_details}',
-                    foreground=colors[8],
+                widget.Mpris2(
+                    format='{xesam:title} - {xesam:artist}',
                     background=colors[4],
-                    ),
-                widget.Battery(
-                    padding=10,
                     foreground=colors[8],
-                    background=colors[0],
-                    fontsize=12,
-                    discharge_char="", 
-                    charge_char="",
-                    format='{percent:1.0%}, {hour:d}:{min:02d} {char}'
-                ),
-                widget.TextBox(
-                    text=" ",
-                    padding=2,
-                    foreground=colors[8],
-                    background=colors[4],
-                   fontsize=12,
-                ),
-                widget.ThermalSensor(
-                    foreground=colors[8],
-                    background=colors[4],
-                    threshold=90,
-                    padding=5,
-                    update_interval=90
-                ),
-                widget.TextBox(
-                    text=" ",
-                    padding=2,
-                    foreground=colors[8],
-                    background=colors[0],
-                    fontsize=14,
-                ),
-                widget.CPU(
-                    foreground=colors[8],
-                    background=colors[0],
-                    padding=5,
-                    update_interval=30,
-                    format="{load_percent}%",
-                ),
-                widget.TextBox(
-                    text=" ",
-                    foreground=colors[8],
-                    background=colors[4],
-                    padding=0
+                    paused_text='Paused media',
+                    padding=5
                 ),
                 widget.Volume(
-                        foreground=colors[8],
-                        background=colors[4],
-                        padding=5),
-                #Set to your network interface to use
-                # widget.Net(
-                # interface = "enp7s0",
-                # format="{down} ↓↑ {up}",
-                # foreground=colors[8],
-                # background=colors[27],
-                # padding=5,
-                # ),
+                    fmt='{} 🔊 ',
+                    background=colors[0],
+                    foreground=colors[8],
+                    padding=5,
+                ),
+                 widget.Battery(
+                    format='{percent:2.0%} {hour:d}:{min:02d} |',
+                    battery='BAT1',
+                    background=colors[4],
+                    foreground=colors[8],
+                    padding=5,
+                    ),
+                widget.Battery(
+                    format='{percent:2.0%} {hour:d}:{min:02d}',
+                    battery='BAT0',
+                    background=colors[4],
+                    foreground=colors[8],
+                    padding=5,
+ 
+                ),
+                widget.KeyboardLayout(
+                    background=colors[0],
+                    foreground=colors[8],
+                    configured_keyboards=['fi', 'us']
+                ),
+                widget.OpenWeather(
+                    location='Helsinki', #Set your own city here
+                    foreground=colors[8],
+                    background=colors[4],
+                    format='{location_city}: {main_temp}°{units_temperature} {weather_details} {icon}',
+                    update_interval=600,
+                    padding=5
+
+                ),
                 widget.Clock(
                     foreground=colors[8],
                     background=colors[0],
                     format=" %a, %b %d %H:%M ",
                 ),
-                # widget.BatteryIcon(
-                    # update_interval=60, foreground=colors[8], background=colors[4]
-                # ),
-                widget.Systray(background=colors[4], padding=5),
-                widget.Sep(
-                    linewidth=0, padding=10, foreground=colors[8], background=colors[4]
-                ),
-                # widget.CurrentLayout(
-                    # foreground=colors[8], background=colors[0], padding=5
-                # ),
+                widget.Systray(
+                    background=colors[4],
+                    padding=3
+                    ),
             ],
-            24,
+            30,
         ),
     ),
 ]
@@ -364,7 +317,6 @@ cursor_warp = False
 floating_layout = layout.Floating(
     float_rules=[
         # Run the utility of `xprop` to see the wm class and name of an X client.
-        #Set floating rules
         *layout.Floating.default_float_rules,
         Match(wm_class="confirmreset"),  # gitk
         Match(wm_class="makebranch"),  # gitk
@@ -378,12 +330,16 @@ auto_fullscreen = True
 focus_on_window_activation = "smart"
 reconfigure_screens = True
 
-# If things like steam games want to auto-minimize themselves when losing
-# focus, should we respect this or not?
-auto_minimize = True
+#Set keyboard rules under the Qtile's Wayland wlroots implementation
+wl_input_rules = {
+    "*": InputConfig(
+        kb_layout='fi'),
+    "type:keyboard": InputConfig(
+        kb_repeat_rate=50,
+        kb_repeat_delay=400),
+}
+# If things like steam games want to auto-minimize themselves when losing focus, should we respect this or not?
+auto_minimize = False
 
-# We choose LG3D to maximize irony: it is a 3D non-reparenting WM written in
-# java that happens to be on java's whitelist.
-
-#Set WM name for COOL NEOFETCH!!!
+#Set WM name for epic Neofetch
 wmname = "Qtile"
