@@ -2,3 +2,5 @@
 Read the commented out lines for more info on certain parameters and what they do!
 
 This will be updated as often as I have the motivation to
+
+Check out the image for a preview of what this looks like! ![qtile-rice](https://github.com/m2thay/qtile-dots/assets/118320217/5acc145b-14d4-4ee6-ad08-bb979dfdbf70)
