@@ -15,8 +15,6 @@ from libqtile import bar, layout, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.backend.wayland import InputConfig
-from qtile_extras import widget
-from qtile_extras.popup.templates.mpris2 import COMPACT_LAYOUT, DEFAULT_LAYOUT
 
 import os
 import subprocess
@@ -75,13 +73,13 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "d", lazy.spawn("rofi -show drun"), desc="Open application launcher"),
     Key([mod], "b", lazy.spawn("strawberry"), desc="Media player"),
-    Key([mod], "c", lazy.spawn("chromium"), desc="Secondary browser"),
+    Key([mod], "w", lazy.spawn(myBrowser), desc="Chromium Browser"),
     Key([mod, "shift"], "y", lazy.spawn("brightnessctl s +100"), desc="Set brightness up"),
     Key([mod, "shift"], "u", lazy.spawn("brightnessctl s 100-"), desc="Set brightness down"),
     Key([], "XF86AudioMute", lazy.spawn("amixer -q set Master toggle"), desc="Mute audio"),
     Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -10%"), desc="Sound down"),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +10%"), desc="Sound down"),
-    Key([mod], "w", lazy.spawn("firefox -P personal"), desc="Browser"),  
+    Key([mod], "f", lazy.spawn("firefox -P personal"), desc="Browser"),  
     Key([mod], "s", lazy.spawn("firefox -P school"), desc="Browser for school work"),  
     Key([mod], "n", lazy.spawn("nemo"), desc="Open graphical file browser"),  
     Key([mod, "shift"], "t", lazy.spawn("thunderbird"), desc="Open mail"),  
@@ -190,7 +188,6 @@ colors = [
     ["#a89984", "#a89984"],  # 28 # gray
     ["#928374", "#928374"],  # 29 # gray bg
 ]  # window name#
-
 
 #Configure the bar
 screens = [
@@ -332,11 +329,11 @@ reconfigure_screens = True
 
 #Set keyboard rules under the Qtile's Wayland wlroots implementation
 wl_input_rules = {
-    "*": InputConfig(
-        kb_layout='fi'),
     "type:keyboard": InputConfig(
         kb_repeat_rate=50,
-        kb_repeat_delay=400),
+        kb_repeat_delay=400,
+        kb_layout='fi',
+        ),
 }
 # If things like steam games want to auto-minimize themselves when losing focus, should we respect this or not?
 auto_minimize = False

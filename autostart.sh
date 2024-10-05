@@ -1,8 +1,6 @@
-#!/bin/sh
+﻿#!/bin/sh
 
 nitrogen --restore &
-xrandr --rate 240 &
-bash .mouseaccel &
 xset r rate 500 40 &
 lxsession &
 picom &
