@@ -22,7 +22,7 @@ import psutil
 
 #Set modkey (Super)
 mod = "mod4"
-#Terminal, uses "guess_terminal" by default
+#Terminal, uses "guess_terminal" by default, remember to import!
 myTerm = "alacritty"
 #Set browser variable
 myBrowser = "firefox"
@@ -73,14 +73,13 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
     Key([mod], "d", lazy.spawn("rofi -show drun"), desc="Open application launcher"),
     Key([mod], "b", lazy.spawn("strawberry"), desc="Media player"),
-    Key([mod], "w", lazy.spawn(myBrowser), desc="Chromium Browser"),
+    Key([mod], "c", lazy.spawn("chromium"), desc="Secondary browser"),
     Key([mod, "shift"], "y", lazy.spawn("brightnessctl s +100"), desc="Set brightness up"),
     Key([mod, "shift"], "u", lazy.spawn("brightnessctl s 100-"), desc="Set brightness down"),
     Key([], "XF86AudioMute", lazy.spawn("amixer -q set Master toggle"), desc="Mute audio"),
     Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -10%"), desc="Sound down"),
     Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +10%"), desc="Sound down"),
-    Key([mod], "f", lazy.spawn("firefox -P personal"), desc="Browser"),  
-    Key([mod], "s", lazy.spawn("firefox -P school"), desc="Browser for school work"),  
+    Key([mod], "w", lazy.spawn("firefox"), desc="Browser"),  
     Key([mod], "n", lazy.spawn("nemo"), desc="Open graphical file browser"),  
     Key([mod, "shift"], "t", lazy.spawn("thunderbird"), desc="Open mail"),  
     Key([mod], "g", lazy.spawn("grim"), desc="Take a screenshot"),  
@@ -92,6 +91,7 @@ keys = [
     Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Previous track"),
     Key([mod], "space", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
     Key([mod], "e", lazy.spawn("easyeffects"), desc="Change EQ settings"),
+    Key([mod], "s", lazy.spawn("steam-native"), desc="Change EQ settings"),
     Key([mod, "shift"], "s", lazy.spawn("flameshot gui"), desc="Take a screenshot"),
     Key([mod], "o", lazy.spawn("obs"), desc="Start streaming/recording"),
     Key([mod], "m", lazy.spawn("./Scripts/displayselect"), desc="Change monitor setup"),
@@ -189,6 +189,7 @@ colors = [
     ["#928374", "#928374"],  # 29 # gray bg
 ]  # window name#
 
+
 #Configure the bar
 screens = [
     Screen(
@@ -241,38 +242,10 @@ screens = [
                     max_chars=20,
                     scroll=True,
                 ),
-                widget.Mpris2(
-                    format='{xesam:title} - {xesam:artist}',
-                    background=colors[4],
-                    foreground=colors[8],
-                    paused_text='Paused media',
-                    padding=5
-                ),
-                widget.Volume(
-                    fmt='{} 🔊 ',
-                    background=colors[0],
-                    foreground=colors[8],
-                    padding=5,
-                ),
-                 widget.Battery(
-                    format='{percent:2.0%} {hour:d}:{min:02d} |',
-                    battery='BAT1',
-                    background=colors[4],
-                    foreground=colors[8],
-                    padding=5,
-                    ),
-                widget.Battery(
-                    format='{percent:2.0%} {hour:d}:{min:02d}',
-                    battery='BAT0',
-                    background=colors[4],
-                    foreground=colors[8],
-                    padding=5,
- 
-                ),
                 widget.KeyboardLayout(
                     background=colors[0],
                     foreground=colors[8],
-                    configured_keyboards=['fi', 'us']
+                    configured_keyboards=['us', 'fi']
                 ),
                 widget.OpenWeather(
                     location='Helsinki', #Set your own city here
@@ -306,6 +279,19 @@ mouse = [
 ]
 
 
+
+#Set keyboard rules under the Qtile's Wayland wlroots implementation
+wl_input_rules = {
+        'type:pointer':
+        InputConfig(
+        accel_profile='flat', pointer_accel=0
+        ),
+        'type:keyboard': InputConfig(
+        kb_repeat_rate=50,
+        kb_repeat_delay=400),
+}
+
+
 dgroups_key_binder = None
 dgroups_app_rules = []  # type: list
 follow_mouse_focus = True
@@ -327,14 +313,6 @@ auto_fullscreen = True
 focus_on_window_activation = "smart"
 reconfigure_screens = True
 
-#Set keyboard rules under the Qtile's Wayland wlroots implementation
-wl_input_rules = {
-    "type:keyboard": InputConfig(
-        kb_repeat_rate=50,
-        kb_repeat_delay=400,
-        kb_layout='fi',
-        ),
-}
 # If things like steam games want to auto-minimize themselves when losing focus, should we respect this or not?
 auto_minimize = False
 
