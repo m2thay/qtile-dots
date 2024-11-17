@@ -13,10 +13,17 @@ Clean up code
 
 Separate config into multiple files (colors.py, etc)
 
+
 Required applications (Wayland update):
+
 swww (wallpaper)
+
 kanshi (monitor setup)
+
 foot (set up foot server)
+
 swayosd (volume/brightness adjust)
+
 lxsession (session manager)
+
 dunst (notifications)
