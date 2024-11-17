@@ -15,6 +15,7 @@ from libqtile import bar, layout, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.backend.wayland import InputConfig
+from qtile_extras import widget #Needed for proper StatusNotifier submenus under Wayland
 
 import os
 import subprocess
@@ -23,7 +24,7 @@ import psutil
 #Set modkey (Super)
 mod = "mod4"
 #Terminal, uses "guess_terminal" by default, remember to import!
-myTerm = "alacritty"
+myTerm = "footclient"
 #Set browser variable
 myBrowser = "firefox"
 
@@ -55,47 +56,28 @@ keys = [
     Key([mod, "control"], "j", lazy.layout.grow_down(), desc="Grow window down"),
     Key([mod, "control"], "k", lazy.layout.grow_up(), desc="Grow window up"),
 
-
-    # Toggle between split and unsplit sides of stack.
-    # Split = all windows displayed
-    # Unsplit = 1 window displayed, like Max layout, but still with
-    # multiple stack panes
-    Key(
-        [mod, "shift"],
-        "Return",
-        lazy.layout.toggle_split(),
-        desc="Toggle between split and unsplit sides of stack",
-    ),
 #Various other keybindings, change to preference. These are quite arbitrary and just something I've gotten used to.
     Key([mod], "t", lazy.spawn(myTerm), desc="Launch terminal"),
     Key([mod, "shift"], "q", lazy.window.kill(), desc="Kill focused window"),
     Key([mod, "control"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown Qtile"),
-    Key([mod], "d", lazy.spawn("rofi -show drun"), desc="Open application launcher"),
-    Key([mod], "b", lazy.spawn("strawberry"), desc="Media player"),
+    Key([mod], "d", lazy.spawn("wofi --show drun"), desc="Open application launcher"),
     Key([mod], "c", lazy.spawn("chromium"), desc="Secondary browser"),
-    Key([mod, "shift"], "y", lazy.spawn("brightnessctl s +100"), desc="Set brightness up"),
-    Key([mod, "shift"], "u", lazy.spawn("brightnessctl s 100-"), desc="Set brightness down"),
-    Key([], "XF86AudioMute", lazy.spawn("amixer -q set Master toggle"), desc="Mute audio"),
-    Key([], "XF86AudioLowerVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ -10%"), desc="Sound down"),
-    Key([], "XF86AudioRaiseVolume", lazy.spawn("pactl set-sink-volume @DEFAULT_SINK@ +10%"), desc="Sound down"),
-    Key([mod], "w", lazy.spawn("firefox"), desc="Browser"),  
+    Key([], "XF86MonBrightnessUp", lazy.spawn("swayosd-client --brightness raise"), desc="Set brightness up"),
+    Key([], "XF86MonBrightnessDown", lazy.spawn("swayosd-client --brightness lower"), desc="Set brightness down"),
+    Key([], "XF86AudioMute", lazy.spawn("swayosd-client --output-volume mute-toggle"), desc="Mute audio"),
+    Key([], "XF86AudioLowerVolume", lazy.spawn("swayosd-client --output-volume lower"), desc="Sound down"),
+    Key([], "XF86AudioRaiseVolume", lazy.spawn("swayosd-client --output-volume raise"), desc="Sound down"),
+    Key([mod], "w", lazy.spawn(myBrowser), desc="Browser"),  
     Key([mod], "n", lazy.spawn("nemo"), desc="Open graphical file browser"),  
-    Key([mod, "shift"], "t", lazy.spawn("thunderbird"), desc="Open mail"),  
-    Key([mod], "g", lazy.spawn("grim"), desc="Take a screenshot"),  
     Key([mod, "shift"], "space", lazy.window.toggle_floating()),
     Key([mod], "p", lazy.spawn("pavucontrol"), desc="Control volume"),
     Key([mod], "r", lazy.spawn("liferea"), desc="Open RSS reader"),
-    Key([mod], "m", lazy.spawn("bash .mouseaccel"), desc="Setup mice"),
-    Key([], "XF86AudioNext", lazy.spawn("playerctl next"), desc="Next track"),
-    Key([], "XF86AudioPrev", lazy.spawn("playerctl previous"), desc="Previous track"),
     Key([mod], "space", lazy.spawn("playerctl play-pause"), desc="Play/Pause"),
     Key([mod], "e", lazy.spawn("easyeffects"), desc="Change EQ settings"),
-    Key([mod], "s", lazy.spawn("steam-native"), desc="Change EQ settings"),
-    Key([mod, "shift"], "s", lazy.spawn("flameshot gui"), desc="Take a screenshot"),
+    Key([mod, "shift"], "s", lazy.spawn("bash Scripts/screenshot.sh"), desc="Take a screenshot"),
     Key([mod], "o", lazy.spawn("obs"), desc="Start streaming/recording"),
-    Key([mod], "m", lazy.spawn("./Scripts/displayselect"), desc="Change monitor setup"),
-    Key([mod], "a", lazy.spawn("arandr"), desc="Change monitor setup"),
+    Key([mod], "k", lazy.spawn("kanshi"), desc="Change monitor setup"),
 ]
 
 #Add groups here, also use asdfuiop if want be. 
@@ -128,7 +110,7 @@ for i in groups:
 #Configure layouts, I prefer Columns or MonadTall, but feel free to use any of the ones listed below 
 layouts = [
     layout.Columns(border_width=4,
-        margin = 10,
+        margin = 5,
         border_focus="#cc241d",
         border_on_single=0,
         margin_on_single=0,
@@ -152,7 +134,7 @@ layouts = [
 widget_defaults = dict(
     font="Hack Nerd Font Bold",
     fontsize=14,
-    padding=3,
+    padding=5,
 )
 extension_defaults = widget_defaults.copy()
 #Set gruvbox colors
@@ -195,24 +177,6 @@ screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.Sep(
-                    linewidth=0,
-                    padding=2,
-                    foreground=colors[2],
-                    background=colors[0]
-                ),
-                widget.Image( #Set a picture in your top left corner
-                    scale=True,
-#                    filename='~/.config/qtile/images/image_proxy.png',
-                    background=colors[0],
-                    margin=3,
-                ),
-                widget.Sep(  # Separator between image and group box.
-                    linewidth=0,
-                    padding=0,
-                    foreground=colors[2],
-                    background=colors[0]
-                ),
                 widget.GroupBox(
                     margin_y=3,
                     margin_x=3,
@@ -242,26 +206,39 @@ screens = [
                     max_chars=20,
                     scroll=True,
                 ),
+                widget.Volume(
+                    fmt='{} 🔊',
+                    background=colors[0],
+                    foreground=colors[8],
+                ),
+                 widget.Battery(
+                    format='{percent:2.0%} {hour:d}:{min:02d}',
+                    battery='BAT0',
+                    background=colors[4],
+                    foreground=colors[8],
+                    padding=5,
+                    charge_char='󱟠',
+                    discharge_char='󱟠',
+                    not_charging_char='󱃌',
+                    ),
                 widget.KeyboardLayout(
                     background=colors[0],
                     foreground=colors[8],
-                    configured_keyboards=['us', 'fi']
-                ),
+                    configured_keyboards=['fi', 'us']
+                    ),
                 widget.OpenWeather(
                     location='Helsinki', #Set your own city here
                     foreground=colors[8],
                     background=colors[4],
                     format='{location_city}: {main_temp}°{units_temperature} {weather_details} {icon}',
                     update_interval=600,
-                    padding=5
-
                 ),
                 widget.Clock(
                     foreground=colors[8],
                     background=colors[0],
                     format=" %a, %b %d %H:%M ",
                 ),
-                widget.Systray(
+                widget.StatusNotifier(
                     background=colors[4],
                     padding=3
                     ),
@@ -282,14 +259,22 @@ mouse = [
 
 #Set keyboard rules under the Qtile's Wayland wlroots implementation
 wl_input_rules = {
-        'type:pointer':
+#        "1267:12691:ELAN06C6:00 04F3:3193 Touchpad":
+#        InputConfig(
+#        accel_profile="flat", pointer_accel=0.5
+#        ),
+        "1149:4128:Kensington Expert Mouse":
         InputConfig(
-        accel_profile='flat', pointer_accel=0
+        accel_profile="flat", pointer_accel=1
         ),
-        'type:keyboard': InputConfig(
+        "type:keyboard": InputConfig(
+        kb_layout="fi",
         kb_repeat_rate=50,
         kb_repeat_delay=400),
 }
+
+wl_xcursor_theme = None
+wl_xcursor_size = 24
 
 
 dgroups_key_binder = None
@@ -316,5 +301,5 @@ reconfigure_screens = True
 # If things like steam games want to auto-minimize themselves when losing focus, should we respect this or not?
 auto_minimize = False
 
-#Set WM name for epic Neofetch
-wmname = "Qtile"
+#Set WM name for epic Neofetch (Doesn't even actually work on most fetch tools like fastfetch)
+wmname = "LG3D"

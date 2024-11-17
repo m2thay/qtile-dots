@@ -12,7 +12,3 @@ Figure out window swallowing
 Clean up code
 
 Separate config into multiple files (colors.py, etc)
-
-Work to get Wayland working properly (setting up grim and other programs to do basic work)
-
-Figure out why autostart script does not work on laptop
